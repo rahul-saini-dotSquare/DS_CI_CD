@@ -1,0 +1,2 @@
+#include "Pods/Target Support Files/Pods-RNTemplate/Pods-RNTemplate.debug.xcconfig"
+#include? "tmp.xcconfig"

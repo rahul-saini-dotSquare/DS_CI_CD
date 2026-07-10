@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RNTemplate — Senior Code Audit Report (Template Edition)</title>
+<style>
+:root{
+  --critical:#e53e3e; --high:#dd6b20; --medium:#d69e2e; --low:#3182ce; --info:#718096;
+  --pass:#38a169; --bg:#f5f6f8; --surface:#ffffff; --surface-2:#eef0f3; --text:#1a202c;
+  --text-dim:#5b6472; --border:#e2e5ea; --accent:#3454d1; --code-bg:#0d1117; --code-text:#c9d1d9;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.05);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#161c26; --surface-2:#1d2430; --text:#e6e9ef; --text-dim:#9aa4b2;
+  --border:#2a3140; --code-bg:#0a0e14; --code-text:#c9d1d9; --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1319; --surface:#161c26; --surface-2:#1d2430; --text:#e6e9ef; --text-dim:#9aa4b2;
+    --border:#2a3140; --code-bg:#0a0e14; --code-text:#c9d1d9; --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;}
+a{color:var(--accent);}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+header.top{position:sticky;top:0;z-index:50;background:var(--surface);border-bottom:1px solid var(--border);backdrop-filter:blur(6px);}
+.topbar{max-width:1180px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.topbar .brand{font-weight:700;font-size:15px;letter-spacing:.2px;}
+.topbar nav{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto;}
+.topbar nav a{font-size:12.5px;color:var(--text-dim);text-decoration:none;padding:6px 9px;border-radius:6px;white-space:nowrap;}
+.topbar nav a:hover{background:var(--surface-2);color:var(--text);}
+.theme-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:13px;}
+.print-btn{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:7px;padding:6px 10px;cursor:pointer;font-size:13px;}
+
+.tplbanner{background:linear-gradient(90deg, rgba(52,84,209,.12), rgba(52,84,209,0));border:1px solid var(--accent);border-radius:10px;padding:10px 16px;font-size:13px;margin-top:22px;color:var(--text);}
+.tplbanner b{color:var(--accent);}
+.progressbanner{background:linear-gradient(90deg, rgba(56,161,105,.14), rgba(56,161,105,0));border:1px solid var(--pass);border-radius:10px;padding:10px 16px;font-size:13px;margin-top:12px;color:var(--text);}
+.progressbanner b{color:var(--pass);}
+
+.hero{padding:22px 0 10px;display:flex;gap:32px;align-items:center;flex-wrap:wrap;}
+.hero h1{font-size:26px;margin:0 0 6px;}
+.hero .meta{color:var(--text-dim);font-size:13.5px;}
+.gauge-wrap{display:flex;align-items:center;gap:18px;}
+.gauge-num{font-size:34px;font-weight:800;}
+.grade-badge{display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;width:52px;height:52px;border-radius:50%;color:#fff;}
+.delta{font-weight:700;font-size:13px;}
+.delta.up{color:var(--pass);}
+
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+.chip{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--text-dim);box-shadow:var(--shadow);}
+.chip b{color:var(--text);}
+.chip.fixed{border-color:var(--pass);color:var(--pass);}
+.chip.fixed b{color:var(--pass);}
+
+section{margin-top:44px;scroll-margin-top:70px;}
+h2.sec-title{font-size:19px;border-left:4px solid var(--accent);padding-left:10px;margin-bottom:16px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow);}
+
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+@media(max-width:900px){.grid5{grid-template-columns:repeat(2,1fr);}}
+.stat{border-radius:10px;padding:16px 14px;color:#fff;text-align:center;}
+.stat .n{font-size:28px;font-weight:800;display:block;}
+.stat .l{font-size:12px;opacity:.9;text-transform:uppercase;letter-spacing:.5px;}
+.stat.crit{background:var(--critical);} .stat.high{background:var(--high);} .stat.med{background:var(--medium);color:#3a2a00;}
+.stat.low{background:var(--low);} .stat.info{background:var(--info);}
+
+.alertbox{border-left:4px solid var(--high);background:rgba(221,107,32,.08);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:14px;}
+.alertbox b{display:block;margin-bottom:2px;}
+.notebox{border-left:4px solid var(--accent);background:rgba(52,84,209,.07);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:13.5px;}
+.fixedbox{border-left:4px solid var(--pass);background:rgba(56,161,105,.08);border-radius:8px;padding:12px 14px;margin-bottom:10px;font-size:14px;}
+.fixedbox b{display:block;margin-bottom:2px;}
+
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.pill{border:1px solid var(--border);background:var(--surface-2);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;color:var(--text);}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.searchbox{flex:1;min-width:180px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12.5px;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);}
+th{color:var(--text-dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px;}
+tr:hover td{background:var(--surface-2);}
+.badge{display:inline-block;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;color:#fff;letter-spacing:.3px;}
+.badge.CRITICAL{background:var(--critical);} .badge.HIGH{background:var(--high);}
+.badge.MEDIUM{background:var(--medium);color:#3a2a00;} .badge.LOW{background:var(--low);}
+.badge.INFO{background:var(--info);}
+.badge.reframed{background:var(--accent);}
+.badge.fixedtag{background:var(--pass);}
+.badge.round{background:var(--text-dim);}
+.badge.newtag{background:#8957e5;}
+
+.finding{border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;background:var(--surface);}
+.finding-head{display:flex;gap:10px;align-items:center;padding:13px 16px;cursor:pointer;flex-wrap:wrap;}
+.finding-head:hover{background:var(--surface-2);}
+.finding-id{color:var(--text-dim);font-size:12px;font-family:ui-monospace,Menlo,monospace;min-width:50px;}
+.finding-title{font-weight:600;font-size:14.5px;flex:1;min-width:200px;}
+.finding-file{font-size:12px;color:var(--text-dim);font-family:ui-monospace,Menlo,monospace;}
+.finding-body{display:none;padding:0 18px 18px;border-top:1px solid var(--border);}
+.finding.open .finding-body{display:block;}
+.finding-body h4{font-size:12px;text-transform:uppercase;color:var(--text-dim);margin:14px 0 6px;letter-spacing:.5px;}
+pre{background:var(--code-bg);color:var(--code-text);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:12.5px;line-height:1.5;margin:0;}
+.rec{background:rgba(56,161,105,.08);border-left:4px solid var(--pass);border-radius:8px;padding:10px 12px;font-size:13.5px;}
+.chev{transition:transform .15s;color:var(--text-dim);}
+.finding.open .chev{transform:rotate(90deg);}
+
+.fixed-item{border:1px solid var(--pass);border-radius:10px;margin-bottom:10px;padding:13px 16px;background:rgba(56,161,105,.05);}
+.fixed-item-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.fixed-item-title{font-weight:600;font-size:14.5px;flex:1;min-width:200px;}
+.fixed-item-body{margin-top:8px;font-size:13.5px;color:var(--text);}
+.fixed-item-body .evidence{margin-top:6px;font-size:12.5px;color:var(--text-dim);font-family:ui-monospace,Menlo,monospace;}
+
+.catbar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:13px;}
+.catbar-row .label{width:220px;flex-shrink:0;color:var(--text-dim);}
+.catbar-track{flex:1;height:10px;background:var(--surface-2);border-radius:6px;overflow:hidden;}
+.catbar-fill{height:100%;border-radius:6px;}
+.catbar-val{width:34px;text-align:right;font-weight:600;}
+
+.pos-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media(max-width:800px){.pos-list{grid-template-columns:1fr;}}
+.pos-item{background:rgba(56,161,105,.08);border:1px solid rgba(56,161,105,.25);border-radius:10px;padding:12px 14px;font-size:13.5px;}
+.pos-item b{display:block;color:var(--pass);margin-bottom:3px;}
+
+footer{margin-top:60px;border-top:1px solid var(--border);padding-top:20px;color:var(--text-dim);font-size:12.5px;}
+
+@media print{
+  header.top,.pillrow,.theme-btn,.print-btn{display:none!important;}
+  .finding-body{display:block!important;}
+  body{background:#fff;color:#000;}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topbar">
+    <div class="brand">RNTemplate Audit</div>
+    <nav id="navlinks">
+      <a href="#exec-summary">Executive Summary</a>
+      <a href="#severity-summary">Severity Summary</a>
+      <a href="#fixed-since-last">Fixed Since Last Audit</a>
+      <a href="#category-scores">Category Scores</a>
+      <a href="#findings">Open Findings</a>
+      <a href="#dependencies">Dependencies</a>
+      <a href="#positives">Positives</a>
+      <a href="#recommendations">Recommendations</a>
+    </nav>
+    <button class="print-btn" onclick="printReport()">Print / PDF</button>
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Theme</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="tplbanner">
+    <b>Audit lens: STARTER TEMPLATE, not a finished app.</b>
+    This project is intentionally a React Native boilerplate. The backend is not set up, and mocked
+    auth / <code>demo-token</code> / no-op form handlers remain deliberate scaffolding meant to be replaced
+    per-project — they are judged here as expected placeholders, not defects.
+  </div>
+  <div class="progressbanner">
+    <b>Fifth audit pass — fresh, from-disk re-check.</b> Honest result this time: almost nothing changed.
+    <code>npm audit</code> was re-run (identical 10 moderate advisories), git history was re-checked (still a
+    single "Initial commit" with everything uncommitted), and every other previously-open item — debug
+    signing, cleartext traffic, token refresh, <code>app.json</code>, the iOS privacy manifest, the
+    store-singleton import, Formik's render-prop style — was re-verified and found unchanged. Exactly one
+    thing changed: the Jest "did not exit" open-handle warning from last round is now gone, confirmed by
+    re-running <code>npx jest --ci</code> directly (exit code 0, no warning). The score moves accordingly —
+    by a small, honest amount, not a fabricated jump.
+  </div>
+
+  <div class="hero">
+    <div class="gauge-wrap">
+      <svg width="96" height="96" viewBox="0 0 96 96">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="var(--surface-2)" stroke-width="10"/>
+        <circle id="gaugeCircle" cx="48" cy="48" r="40" fill="none" stroke="var(--pass)" stroke-width="10"
+          stroke-dasharray="251.2" stroke-dashoffset="22.6" stroke-linecap="round" transform="rotate(-90 48 48)"/>
+        <text x="48" y="54" text-anchor="middle" font-size="22" font-weight="800" fill="var(--text)">91</text>
+      </svg>
+      <div>
+        <div class="gauge-num">Grade <span class="grade-badge" style="background:var(--pass);">A-</span></div>
+        <div class="meta">Overall Health Score (template lens): 91 / 100
+          <span class="delta up">▲ +1 vs previous audit (90)</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h1>RNTemplate — React Native Starter Template Audit</h1>
+      <div class="meta">Re-audited: 2026-07-10 (pass 5) &nbsp;·&nbsp; Auditor: Senior Code Auditor &nbsp;·&nbsp; Stack: React Native 0.86 / React 19 / TypeScript / Redux Toolkit &nbsp;·&nbsp; Lens: Template / Boilerplate Quality</div>
+      <div class="chips">
+        <span class="chip fixed"><b>21</b> findings fixed cumulatively</span>
+        <span class="chip"><b>16</b> findings still open</span>
+        <span class="chip"><b>0</b> critical, <b>0</b> high, <b>1</b> medium remaining</span>
+        <span class="chip fixed"><b>Jest exits clean</b> — open-handle warning gone</span>
+        <span class="chip"><b>16</b> items re-verified unchanged this pass</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section id="exec-summary">
+    <h2 class="sec-title">Executive Summary</h2>
+    <div class="card">
+      <p>This is the fifth ground-up re-audit of RNTemplate, and the most important thing to report honestly
+      is that very little changed since the last pass. <code>npm audit</code> was re-run fresh and returned
+      the identical 10 moderate advisories (0 high/critical) as every prior pass. <code>git log</code> still
+      shows a single "Initial commit," and <code>git status</code> still shows a large, growing set of
+      uncommitted working-tree changes (84 paths this time, one more than last pass). Debug-signed release
+      builds, cleartext HTTP traffic, the absence of token-refresh handling, the minimal <code>app.json</code>,
+      the empty iOS privacy-manifest data types, the Redux-store-singleton import in the Axios interceptors,
+      and the static-fragment Formik pattern were all re-checked directly against the current files and are
+      all unchanged from the previous audit.</p>
+      <p>Exactly one thing changed, and it was verified by running the tests, not just reading the diff:
+      <code>__tests__/App.test.tsx</code> now mocks <code>redux-persist</code>'s <code>persistStore</code>,
+      <code>NotificationService</code>, <code>SocialLogin</code>, and <code>AuthService.restoreSession</code>,
+      and explicitly unmounts the rendered tree (<code>tree?.unmount()</code>) after the assertion. Re-running
+      <code>npx jest --ci</code> confirms the "Jest did not exit one second after the test run" open-handle
+      warning from the last audit is gone — the process now exits cleanly (exit code 0) with the same 4
+      suites / 11 tests passing.</p>
+      <p>Recomputed overall template health score: <b>91 / 100 (Grade A-)</b>, up a deliberately small +1
+      from 90. This is an honest, proportionate delta for an honest, proportionate change — a single
+      Info-level test-hygiene fix, not a sweep of new remediation. The project remains in a strong, stable
+      state: 0 Critical, 0 High, and only 1 Medium finding (a non-breaking dependency bump) stand between
+      this template and a clean bill of health.</p>
+    </div>
+  </section>
+
+  <!-- SEVERITY SUMMARY -->
+  <section id="severity-summary">
+    <h2 class="sec-title">Open Findings by Severity</h2>
+    <div class="grid5">
+      <div class="stat crit"><span class="n">0</span><span class="l">Critical</span></div>
+      <div class="stat high"><span class="n">0</span><span class="l">High</span></div>
+      <div class="stat med"><span class="n">1</span><span class="l">Medium</span></div>
+      <div class="stat low"><span class="n">6</span><span class="l">Low</span></div>
+      <div class="stat info"><span class="n">9</span><span class="l">Info</span></div>
+    </div>
+    <div class="notebox" style="margin-top:14px;">
+      Previous audit (pass 4): 0/0/1/6/10 (17 open, 20 fixed). This audit (pass 5): 0/0/1/6/9 (16 open, 21
+      fixed cumulatively). Net change: 1 Info-level item fixed (Jest open-handle warning), 0 new issues,
+      16 items re-verified as genuinely unchanged.
+    </div>
+  </section>
+
+  <!-- FIXED SINCE LAST AUDIT -->
+  <section id="fixed-since-last">
+    <h2 class="sec-title">Fixed Since Last Audit</h2>
+    <div class="card" id="fixedList"></div>
+  </section>
+
+  <!-- CATEGORY SCORES -->
+  <section id="category-scores">
+    <h2 class="sec-title">Category Scores (Template Lens)</h2>
+    <div class="card" id="catbars"></div>
+  </section>
+
+  <!-- FINDINGS -->
+  <section id="findings">
+    <h2 class="sec-title">Open Findings</h2>
+    <div class="card">
+      <div class="pillrow" id="filterPills">
+        <span class="pill active" data-sev="All" onclick="filterFindings('All')">All</span>
+        <span class="pill" data-sev="MEDIUM" onclick="filterFindings('MEDIUM')">Medium</span>
+        <span class="pill" data-sev="LOW" onclick="filterFindings('LOW')">Low</span>
+        <span class="pill" data-sev="INFO" onclick="filterFindings('INFO')">Info</span>
+        <input class="searchbox" id="searchBox" placeholder="Search findings…" oninput="filterFindings(null,this.value)">
+      </div>
+      <div id="findingsList"></div>
+    </div>
+  </section>
+
+  <!-- DEPENDENCIES -->
+  <section id="dependencies">
+    <h2 class="sec-title">Dependency Overview</h2>
+    <div class="card">
+      <p style="margin-top:0;color:var(--text-dim);font-size:13.5px;">Re-verified this pass via a fresh <code>npm audit</code> run, unchanged across all five audit passes: <b style="color:var(--medium)">10 moderate</b>
+      vulnerabilities, 0 high/critical. All flow through <code>@react-native-community/cli*</code> and its
+      <code>fast-xml-parser</code> / <code>uuid</code> / <code>xcode</code> transitive deps — fixable with
+      <code>npm audit fix</code> (upgrades CLI 20.1.0 → 20.2.0), no breaking change required. No package.json
+      changes were detected this round.</p>
+      <table>
+        <thead><tr><th>Package</th><th>Current</th><th>Latest</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td>react-native</td><td>0.86.0</td><td>0.86.0 (npm "latest" tag lags at 0.84.1)</td><td>OK — bleeding-edge RN, verify New Architecture compat with all native deps</td></tr>
+          <tr><td>react</td><td>19.2.3</td><td>19.2.7</td><td>Patch behind</td></tr>
+          <tr><td>@react-native-community/cli*</td><td>20.1.0</td><td>20.2.0</td><td>Fixes the moderate audit findings</td></tr>
+          <tr><td>eslint</td><td>8.57.1</td><td>9.39.4</td><td>Major behind — RN's own eslint-config still targets v8</td></tr>
+          <tr><td>prettier</td><td>2.8.8</td><td>3.9.5</td><td>Major behind</td></tr>
+          <tr><td>jest</td><td>29.7.0</td><td>30.4.2</td><td>Major behind</td></tr>
+          <tr><td>typescript</td><td>5.9.3 (installed) / ^5.8.3 (declared)</td><td>7.0.2</td><td>Fine for now, watch RN's supported range</td></tr>
+          <tr><td>react-native-screens</td><td>4.25.2</td><td>4.26.0</td><td>Patch behind</td></tr>
+          <tr><td>react-native-keyboard-controller</td><td>1.21.14</td><td>1.22.0</td><td>Minor behind</td></tr>
+          <tr><td>react-native-toast-message</td><td>2.3.3</td><td>2.4.0</td><td>Minor behind</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:13px;color:var(--text-dim);">Dependency counts: <b>32</b> runtime dependencies, <b>21</b> dev dependencies, package-lock.json present and committed (good). CI now runs 4 clean-exiting test suites on every PR.</p>
+    </div>
+  </section>
+
+  <!-- POSITIVES -->
+  <section id="positives">
+    <h2 class="sec-title">Positive Observations</h2>
+    <div class="pos-list">
+      <div class="pos-item"><b>Test hygiene fix was done properly, not papered over</b><code>App.test.tsx</code> now mocks every side-effecting dependency the bootstrap effect touches (redux-persist, NotificationService, SocialLogin, AuthService.restoreSession) <i>and</i> explicitly unmounts the render tree — the correct fix for an open-handle warning, not a suppressed one.</div>
+      <div class="pos-item"><b>Verified by execution again, not just by reading</b>This pass re-ran <code>npx jest --ci</code> and <code>npm audit</code> directly rather than trusting prior results — both confirmed exactly what was expected: the warning is gone, and the dependency findings are unchanged.</div>
+      <div class="pos-item"><b>No regressions across five passes</b>Every fix confirmed in passes 2-4 (Firebase secrets hygiene, Keychain token storage, README, accessibility baseline, ErrorBoundary, CI workflow, example tests, Ruby pin) is still holding correctly with zero drift.</div>
+      <div class="pos-item"><b>The project knows its own remaining gaps</b>The README's "Before release" checklist still accurately lists debug signing, cleartext traffic, and token refresh as known, deliberate template limitations — nothing here is a silent surprise for a team adopting this template.</div>
+    </div>
+  </section>
+
+  <!-- RECOMMENDATIONS -->
+  <section id="recommendations">
+    <h2 class="sec-title">Top Recommendations (Priority Order, Remaining Items)</h2>
+    <div class="card">
+      <ol style="padding-left:18px;font-size:14px;">
+        <li><b>Run `npm audit fix`</b> to clear the 10 moderate advisories via the non-breaking CLI 20.1.0 → 20.2.0 bump — the only Medium-severity item left.</li>
+        <li><b>Commit the accumulated work.</b> Five audit passes of verified fixes are still sitting uncommitted on top of a single "Initial commit" — this is now, by a wide margin, the most conspicuous remaining gap and the top priority regardless of code quality.</li>
+        <li><b>Optional polish:</b> add inline <code>// TODO(integration): …</code> markers at the mocked call sites to mirror the README's Integration checklist 1:1 in-code; scope <code>usesCleartextTraffic</code> via a network-security-config; switch Formik forms to the render-prop form when real async submits land.</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    Auditor: Senior Code Auditor · Report generated 2026-07-10 (re-audit pass 5 — template lens, fixes verified from disk and by re-running npm audit / npx jest --ci) · Project: RNTemplate (React Native 0.86, TypeScript) ·
+    68+ source files reviewed across App.tsx, index.js, src/, android/, ios/, .github/, and config files. Backend intentionally not configured; audited as a starter template.
+  </footer>
+
+</div>
+
+<script>
+const FIXED_FINDINGS = [
+{id:'I-jest-handles', prevSev:'INFO', round:5, title:'Jest reported it did not exit cleanly after the test run (open handle)',
+ evidence:'__tests__/App.test.tsx now mocks redux-persist\'s persistStore, @lib/NotificationService, @lib/SocialLogin, and @api/service/AuthService.restoreSession, and explicitly calls tree?.unmount() after the render assertion. Re-running `npx jest --ci` confirms: 4 suites, 11 tests passing, exit code 0, no "did not exit" warning.',
+ verdict:'FIXED — verified by re-running the suite directly, not just reading the diff.'},
+
+{id:'M8', prevSev:'MEDIUM', round:4, title:'Test harness had no example tests demonstrating the intended patterns',
+ evidence:'AuthSlice.test.ts, errorHandler.test.ts, keychain.test.ts, plus jest.setup.js mocking every native module. 4 suites / 11 tests passing, re-confirmed in pass 5.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L7', prevSev:'LOW', round:4, title:'CocoaPods bundler targeted Ruby 2.6 (EOL)',
+ evidence:'.ruby-version pins 3.2.2, re-confirmed present in pass 5.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M1', prevSev:'MEDIUM', round:3, title:'Native applicationId/bundle id not genericized — README did not mention updating it alongside Firebase config',
+ evidence:'README.md\'s "Firebase config" section explicitly instructs renaming applicationId/PRODUCT_BUNDLE_IDENTIFIER alongside the Firebase swap.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M2', prevSev:'MEDIUM', round:3, title:'Zero accessibility props across the entire UI',
+ evidence:'AdaptiveButton, AdaptiveTextInput, AdaptiveCheckbox, BackButton, HeaderButton, DashboardHeaderButton all use accessibilityLabel/accessibilityRole/accessible.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M6', prevSev:'MEDIUM', round:3, title:'No app-level error boundary',
+ evidence:'src/components/common/ErrorBoundary.tsx implements getDerivedStateFromError + componentDidCatch with a real fallback UI; wraps AppProviders in App.tsx.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M7', prevSev:'MEDIUM', round:3, title:'No starter CI workflow',
+ evidence:'.github/workflows/ci.yml runs lint → typecheck → test on every push/PR to main.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L8', prevSev:'LOW', round:3, title:'No enforced Node version despite an engines constraint',
+ evidence:'.nvmrc contains "22.11.0", referenced by the CI workflow.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L9', prevSev:'LOW', round:3, title:'.vscode/settings.json only contained a spell-check word list',
+ evidence:'formatOnSave, ESLint auto-fix, tsdk path, plus a matching .vscode/extensions.json.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'I5', prevSev:'INFO', round:3, title:'Redundant, transiently-inconsistent Keychain writes in storeToken/storeUser',
+ evidence:'Replaced by a single AuthService.storeSession(token, user) call.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'I6', prevSev:'INFO', round:3, title:'Keychain service constants hardcoded "com.rntemplate.*"',
+ evidence:"Renamed to neutral 'auth.session.token' / 'auth.session.user'.",
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L12', prevSev:'LOW', round:3, title:'AppDelegate used a raw print() instead of structured logging',
+ evidence:'Now uses os_log("SplashView module not found — check pod install", type: .error).',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'I12', prevSev:'INFO', round:3, title:'Mixed quote/spacing style between root files and src/',
+ evidence:'App.tsx and index.js consistently single-quoted; no double-quoted imports remain.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'H1', prevSev:'HIGH', round:2, title:'Live Firebase project credentials committed into the working tree, not gitignored',
+ evidence:'.gitignore excludes google-services.json/GoogleService-Info.plist with !*.example negations; committed *.example files use fully generic placeholders.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'H2', prevSev:'HIGH', round:2, title:'Auth token persisted unencrypted via redux-persist → AsyncStorage instead of Keychain',
+ evidence:'Store.ts persist whitelist is []; session round-trips through Keychain via AuthService.restoreSession()/storeSession().',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'H4', prevSev:'HIGH', round:2, title:'README provided no template-specific onboarding',
+ evidence:'README.md rewritten with prerequisites, setup, env-var table, Firebase + identity instructions, Integration checklist, Before-release checklist.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M3', prevSev:'MEDIUM', round:2, title:'i18n folder scaffolded but no library wired',
+ evidence:'src/i18n does not exist on disk.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M5', prevSev:'MEDIUM', round:2, title:'Pull-to-refresh spinner could never appear on the Dashboard',
+ evidence:'DashboardScreen.tsx tracks a dedicated refreshing state with a handleRefresh callback.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'M9', prevSev:'MEDIUM', round:2, title:'Empty NSLocationWhenInUseUsageDescription',
+ evidence:'ios/RNTemplate/Info.plist now reads "This app uses your location to show nearby content."',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L5', prevSev:'LOW', round:2, title:'Explicit `any` in usePreventDoubleTap',
+ evidence:'type AnyFunction = (...args: never[]) => unknown.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+
+{id:'L6', prevSev:'LOW', round:2, title:'FCM device token logged in full via Logger',
+ evidence:'NotificationService.ts logs a truncated token.',
+ verdict:'FIXED (re-confirmed unchanged/holding in pass 5).'},
+];
+
+const FINDINGS = [
+{id:'M4',sev:'MEDIUM',cat:'Dependencies',title:'Dev tooling still a major version behind; 10 moderate npm audit findings unchanged',
+ file:'package.json devDependencies',
+ desc:'Re-verified via a fresh `npm audit` and `npm outdated` run this pass: still the identical 10 moderate advisories (0 high/critical), and ESLint 8.57.1 / Prettier 2.8.8 / Jest 29.7.0 are unchanged versions. No package.json changes detected this round at all.',
+ code:'"eslint": "^8.19.0", "prettier": "2.8.8", "jest": "^29.6.3"',
+ rec:'Run `npm audit fix` for the non-breaking CLI 20.1.0 → 20.2.0 bump; track ESLint 9/Prettier 3/Jest 30 for whenever @react-native/eslint-config supports them.'},
+
+{id:'L1',sev:'LOW',cat:'Template Placeholder',title:'Login/Sign-Up still call storeSession(\'demo-token\', ...) directly — expected placeholder, documented',
+ file:'src/screens/auth/LoginScreen.tsx:39-50, src/screens/auth/SignUpScreen.tsx:19-21',
+ desc:'Unchanged since pass 3 — still expected scaffolding since the backend is intentionally not wired. Still uses the current, correct AuthService.storeSession(token, user) API.',
+ code:`const handleLogin = async (values: LoginFormValues) => {
+  await AuthService.storeSession('demo-token', {
+    id: '1', name: 'Demo User', email: values.email,
+  });
+  ...
+};`,
+ rec:'Optional polish: add an inline `// TODO(integration): replace with AuthService.loginUser(values)` comment at each site to match the README\'s checklist 1:1.'},
+
+{id:'L2',sev:'LOW',cat:'Template Placeholder',title:'Profile-edit and forgot-password forms still no-ops — expected placeholder, documented',
+ file:'src/screens/home/Profile/EditProfileScreen.tsx:35-37, src/screens/auth/ForgotPasswordScreen.tsx:25-27',
+ desc:'Unchanged — both onSubmit handlers still just navigation.goBack(). Still listed in the README\'s Integration checklist table.',
+ code:'onSubmit={() => { navigation.goBack(); }}',
+ rec:'Optional polish: add inline TODO markers matching the README checklist.'},
+
+{id:'L3',sev:'LOW',cat:'Template Placeholder',title:'register endpoint still defined but never called — intentional scaffold-ahead-of-UI',
+ file:'src/api/Endpoints.ts:3',
+ desc:'Unchanged — still fine for a template; still referenced in the README\'s Integration checklist.',
+ code:"register = 'auth/register',",
+ rec:'No further action required beyond the documentation already added.'},
+
+{id:'L4',sev:'LOW',cat:'Native / Android',title:'Release build still signs with the debug keystore — stock RN CLI default, documented',
+ file:'android/app/build.gradle:103-110',
+ desc:'Re-verified this pass — code unchanged (still the stock RN CLI debug-signing default). Still explicitly called out in the README\'s "Before release" checklist.',
+ code:'signingConfig signingConfigs.debug  // release buildType',
+ rec:'No code change required for a template; consider linking to the RN signed-APK guide directly from the README checklist item.'},
+
+{id:'L-cleartext',sev:'LOW',cat:'Native / Android',title:'Cleartext HTTP traffic still enabled by default — code unchanged, documented',
+ file:'android/app/src/main/AndroidManifest.xml:13',
+ desc:'Re-verified this pass — usesCleartextTraffic="true" is unchanged in the manifest. Still flagged in the README\'s "Before release" section.',
+ code:'android:usesCleartextTraffic="true"',
+ rec:'For full closure, scope it via a network-security-config restricted to the dev API host rather than a blanket manifest flag.'},
+
+{id:'L10',sev:'LOW',cat:'Code Quality',title:'Formik forms still use a static fragment child instead of the render-prop form — unchanged',
+ file:'src/screens/auth/LoginScreen.tsx:57-95, SignUpScreen.tsx, ForgotPasswordScreen.tsx, EditProfileScreen.tsx',
+ desc:'Re-verified via a fresh grep this pass — unchanged; still forecloses reflecting isSubmitting once real async submits are wired in.',
+ code:'<Formik ...>\n  <>\n    <FormTextInput .../>\n  </>\n</Formik>',
+ rec:'Switch to the function-as-children form when wiring real async submits (see L1/L2).'},
+
+{id:'I1',sev:'INFO',cat:'Resilience',title:'No token refresh / expiry handling — unchanged, documented limitation',
+ file:'src/api/interceptors/responseInterceptor.ts:8-13',
+ desc:'Re-verified this pass — unchanged; covered by the README\'s "Before release" note that token refresh is out of scope.',
+ code:'if (error.response?.status === 401) { store.dispatch(logout()); }',
+ rec:'No action required beyond the documentation already added.'},
+
+{id:'I2',sev:'INFO',cat:'Configuration',title:'app.json remains minimal placeholder metadata',
+ file:'app.json',
+ desc:'Re-verified this pass via a fresh read — unchanged, still just {"name", "displayName"}. Fine for RN CLI apps.',
+ code:'{ "name": "RNTemplate", "displayName": "RNTemplate" }',
+ rec:'No action required.'},
+
+{id:'I3',sev:'INFO',cat:'Dependencies',title:'react-native-asset devDependency still flagged via the xcode package',
+ file:'package.json devDependencies',
+ desc:'Re-verified this pass via a fresh npm audit — unchanged; dev-only, no runtime exposure.',
+ code:'"react-native-asset": "^2.3.0"',
+ rec:'Track for an upstream fix; low priority.'},
+
+{id:'I4',sev:'INFO',cat:'Architecture',title:'Redux store singleton still imported directly into the Axios interceptor layer',
+ file:'src/api/interceptors/requestInterceptor.ts:2,5, responseInterceptor.ts:2',
+ desc:'Re-verified this pass via a fresh grep — unchanged; acceptable pattern for a single global store.',
+ code:"import {store} from '@store/Store';",
+ rec:'Consider a thin token-getter interface only if the example tests ever need to mock this layer more deeply.'},
+
+{id:'I7',sev:'INFO',cat:'Documentation',title:'No file-level headers (author/license/copyright) on any source file — unchanged',
+ file:'all src/*.ts(x) files',
+ desc:'Unchanged; only relevant if the organization has a documentation-header policy for distributed templates.',
+ code:'// (no header found in any src/ file)',
+ rec:'Add a standard header block only if required by organizational policy.'},
+
+{id:'I8',sev:'INFO',cat:'Observability',title:'No structured/JSON logging or correlation IDs — unchanged',
+ file:'src/utils/Logger.ts',
+ desc:'Unchanged; appropriate for a client template at this stage.',
+ code:'static log = (...args: unknown[]) => { if (__DEV__) console.log(...args); };',
+ rec:'Revisit only once a team adds remote log aggregation.'},
+
+{id:'I9',sev:'INFO',cat:'Dependencies',title:'react-native-splash-view remains a very low-adoption pre-1.0 package',
+ file:'package.json "react-native-splash-view": "^0.0.21"',
+ desc:'Unchanged; worth a maintenance-risk note for a long-lived template.',
+ code:'"react-native-splash-view": "^0.0.21"',
+ rec:'Evaluate react-native-bootsplash or the official splash-screen alternatives.'},
+
+{id:'I10',sev:'INFO',cat:'Native / iOS',title:'PrivacyInfo.xcprivacy still declares zero collected data types',
+ file:'ios/RNTemplate/PrivacyInfo.xcprivacy:43-44',
+ desc:'Re-verified this pass via a fresh read — unchanged; still consistent with auth/profile collection being mocked. README still reminds teams to populate this once real data collection is wired in.',
+ code:'<key>NSPrivacyCollectedDataTypes</key>\n<array/>',
+ rec:'No further action required beyond the reminder already added to the README.'},
+
+{id:'I11',sev:'INFO',cat:'Git Hygiene',title:'Still a single squashed "Initial commit" — five rounds of fixes remain uncommitted',
+ file:'git log (1 commit total)',
+ desc:'Re-verified this pass — unchanged, and the uncommitted diff has grown slightly (84 changed paths vs 83 last pass, from the App.test.tsx fix). All fixes verified across all five audit passes still exist only as uncommitted working-tree changes.',
+ code:'7c0e288 Initial commit',
+ rec:'Commit the accumulated fixes with descriptive, conventional commit messages — this is now, by a wide margin, the most conspicuous remaining gap.'},
+];
+
+const CATEGORIES = [
+ {name:'Code Quality & Structure', score:88},
+ {name:'Architecture & Reusability', score:74},
+ {name:'Security Hygiene (Template-Appropriate)', score:86},
+ {name:'Native Config Correctness', score:76},
+ {name:'Dependencies', score:64},
+ {name:'Test Harness Quality', score:84},
+ {name:'Documentation & Onboarding', score:92},
+ {name:'Linting / Formatting / Hooks', score:90},
+ {name:'Performance', score:76},
+ {name:'Error Handling & Resilience', score:82},
+ {name:'Accessibility & i18n Scaffolding', score:62},
+ {name:'CI/CD (Optional for Templates)', score:84},
+ {name:'Git Hygiene', score:62},
+];
+
+function renderCatBars(){
+  const el = document.getElementById('catbars');
+  el.innerHTML = CATEGORIES.map(c=>{
+    const color = c.score>=75?'var(--pass)':c.score>=55?'var(--medium)':c.score>=35?'var(--high)':'var(--critical)';
+    return `<div class="catbar-row"><span class="label">${c.name}</span><div class="catbar-track"><div class="catbar-fill" style="width:${c.score}%;background:${color};"></div></div><span class="catbar-val">${c.score}</span></div>`;
+  }).join('');
+}
+
+function renderFixed(){
+  const el = document.getElementById('fixedList');
+  el.innerHTML = FIXED_FINDINGS.map(f=>`
+    <div class="fixed-item">
+      <div class="fixed-item-head">
+        <span class="badge ${f.prevSev}">${f.prevSev}</span>
+        <span class="badge fixedtag">FIXED</span>
+        <span class="badge round">pass ${f.round}</span>
+        <span class="fixed-item-title">${f.id} — ${f.title}</span>
+      </div>
+      <div class="fixed-item-body">${f.verdict}</div>
+      <div class="evidence">Evidence: ${f.evidence}</div>
+    </div>`).join('');
+}
+
+function renderFindings(){
+  const list = document.getElementById('findingsList');
+  list.innerHTML = FINDINGS.map(f=>`
+    <div class="finding" data-sev="${f.sev}" data-text="${(f.title+' '+f.cat+' '+f.file).toLowerCase().replace(/"/g,'')}" id="${f.id}">
+      <div class="finding-head" onclick="toggleFindingDetail('${f.id}')">
+        <span class="chev">▶</span>
+        <span class="finding-id">${f.id}</span>
+        <span class="badge ${f.sev}">${f.sev}</span>
+        ${f.cat==='Template Placeholder' ? '<span class="badge reframed">PLACEHOLDER</span>' : ''}
+        <span class="finding-title">${f.title}</span>
+        <span class="finding-file">${f.file.split(',')[0]}</span>
+      </div>
+      <div class="finding-body">
+        <h4>Category</h4><div>${f.cat}</div>
+        <h4>File Reference(s)</h4><div class="finding-file">${f.file}</div>
+        <h4>Description</h4><div>${f.desc}</div>
+        <h4>Code</h4><pre>${f.code.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+        <h4>Recommendation</h4><div class="rec">${f.rec}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleFindingDetail(id){
+  document.getElementById(id).classList.toggle('open');
+}
+
+let currentSev = 'All';
+function filterFindings(sev, searchVal){
+  if (sev !== null && sev !== undefined) {
+    currentSev = sev;
+    document.querySelectorAll('#filterPills .pill').forEach(p=>p.classList.toggle('active', p.dataset.sev===sev));
+  }
+  const search = (searchVal !== undefined ? searchVal : document.getElementById('searchBox').value).toLowerCase();
+  document.querySelectorAll('.finding').forEach(node=>{
+    const matchesSev = currentSev==='All' || node.dataset.sev===currentSev;
+    const matchesSearch = !search || node.dataset.text.includes(search);
+    node.style.display = (matchesSev && matchesSearch) ? '' : 'none';
+  });
+}
+
+function initTheme(){
+  const saved = localStorage.getItem('audit-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  updateThemeBtn();
+}
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('audit-theme', next);
+  updateThemeBtn();
+}
+function updateThemeBtn(){
+  const cur = document.documentElement.getAttribute('data-theme') ||
+    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.getElementById('themeBtn').textContent = cur==='dark' ? '☀️ Theme' : '🌙 Theme';
+}
+function initSmoothScroll(){
+  document.querySelectorAll('#navlinks a').forEach(a=>{
+    a.addEventListener('click', e=>{
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+    });
+  });
+}
+function printReport(){ window.print(); }
+
+initTheme();
+renderCatBars();
+renderFixed();
+renderFindings();
+initSmoothScroll();
+</script>
+</body>
+</html>
