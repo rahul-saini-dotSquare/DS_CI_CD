@@ -29,8 +29,9 @@ const renderProfileIcon = ({ focused }: { focused: boolean }) => (
 const renderTabBarButton = (props: BottomTabBarButtonProps) => (
   <PlatformPressable
     {...props}
-    pressColor="rgba(0, 0, 0, 0.08)"
-    android_ripple={{ borderless: false }}
+    pressColor="transparent"
+    pressOpacity={1}
+    android_ripple={{ color: 'transparent', borderless: false }}
   />
 );
 

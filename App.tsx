@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { StatusBar, StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Toast from 'react-native-toast-message';
 import { hideSplash } from 'react-native-splash-view';
 import AppProviders from '@providers/AppProviders';
 import RootNavigator from '@navigation/RootNavigator';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 import OfflineBanner from '@components/common/OfflineBanner';
+import AppToast from '@components/common/AppToast';
 import SocialLogin from '@lib/SocialLogin';
 import NotificationService from '@lib/NotificationService';
 import AuthService from '@api/service/AuthService';
@@ -38,7 +38,7 @@ function App() {
           <StatusBar barStyle={isDarkMode ? 'dark-content' : 'dark-content'} />
           <RootNavigator />
           <OfflineBanner />
-          <Toast />
+          <AppToast />
         </AppProviders>
       </ErrorBoundary>
     </GestureHandlerRootView>

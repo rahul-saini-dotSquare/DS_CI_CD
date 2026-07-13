@@ -10,6 +10,7 @@ import Spacer from '@components/layout/Spacer';
 import { loginSchema } from '@utils/validation/schemas';
 import AuthService from '@api/service/AuthService';
 import keychain from '@lib/keychain';
+import { AUTH_TOKEN } from '@constants/AppConstants';
 import { AuthStackScreenProps } from '@navigation/types';
 
 interface LoginFormValues {
@@ -36,9 +37,9 @@ const LoginScreen: React.FC<AuthStackScreenProps<'LoginScreen'>> = ({
   }, []);
 
   const handleLogin = async (values: LoginFormValues) => {
-    await AuthService.storeSession('demo-token', {
+    await AuthService.storeSession(AUTH_TOKEN, {
       id: '1',
-      name: 'Demo User',
+      name: 'Guest User',
       email: values.email,
     });
     if (rememberMe) {

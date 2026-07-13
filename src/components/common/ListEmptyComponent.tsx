@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   text: {
-    ...Style.getTextStyle(16, 'SemiBold', Colors.textColor),
+    ...Style.getTextStyle(16, 'Regular', Colors.textColor),
     textAlign: 'center',
     paddingHorizontal: wp(7),
     lineHeight: hp(2.5),

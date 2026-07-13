@@ -5,6 +5,7 @@ import AuthContainer from '@components/layout/AuthContainer';
 import AuthLabeledContent from '@components/common/AuthLabeledContent';
 import Spacer from '@components/layout/Spacer';
 import AuthService from '@api/service/AuthService';
+import { AUTH_TOKEN } from '@constants/AppConstants';
 import { AuthStackScreenProps } from '@navigation/types';
 
 const SignUpScreen: React.FC<AuthStackScreenProps<'SignUpScreen'>> = ({
@@ -15,7 +16,7 @@ const SignUpScreen: React.FC<AuthStackScreenProps<'SignUpScreen'>> = ({
   const [password, setPassword] = useState('');
 
   const handleSignUp = async () => {
-    await AuthService.storeSession('demo-token', { id: '1', name, email });
+    await AuthService.storeSession(AUTH_TOKEN, { id: '1', name, email });
   };
 
   return (
@@ -54,7 +55,7 @@ const SignUpScreen: React.FC<AuthStackScreenProps<'SignUpScreen'>> = ({
       <AdaptiveButton
         variant="text"
         title="Already have an account? Login"
-        onPress={() => navigation.navigate('LoginScreen')}
+        onPress={() => navigation.goBack()}
       />
     </AuthContainer>
   );
