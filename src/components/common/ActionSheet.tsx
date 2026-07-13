@@ -1,5 +1,13 @@
-import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  ActionSheetIOS,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@theme/Colors';
 import Style from '@constants/Style';
@@ -27,6 +35,7 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
   cancelLabel = 'Cancel',
 }) => {
   const insets = useSafeAreaInsets();
+  const shownRef = useRef(false);
   const containerStyle = [
     styles.container,
     { paddingBottom: insets.bottom + 12 },
@@ -35,35 +44,75 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
     onClose();
     option.onPress();
   };
+  useEffect(() => {
+    if (Platform.OS !== 'ios') {
+      return;
+    }
+    if (!visible) {
+      shownRef.current = false;
+      return;
+    }
+    if (shownRef.current) {
+      return;
+    }
+    shownRef.current = true;
+    const labels = options.map(option => option.label);
+    const destructiveIndex = options.findIndex(option => option.destructive);
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title,
+        options: [...labels, cancelLabel],
+        cancelButtonIndex: labels.length,
+        destructiveButtonIndex:
+          destructiveIndex >= 0 ? destructiveIndex : undefined,
+      },
+      buttonIndex => {
+        onClose();
+        if (buttonIndex < options.length) {
+          options[buttonIndex].onPress();
+        }
+      },
+    );
+  }, [visible, options, title, cancelLabel, onClose]);
+  if (Platform.OS === 'ios') {
+    return null;
+  }
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose} />
-      <View style={containerStyle}>
-        {title != null && <Text style={styles.title}>{title}</Text>}
-        {options.map(option => (
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <View style={containerStyle}>
+          <View style={styles.group}>
+            {title != null && <Text style={styles.title}>{title}</Text>}
+            {options.map((option, index) => (
+              <AdaptiveButton
+                key={option.label}
+                variant="light"
+                title={option.label}
+                onPress={() => handlePress(option)}
+                style={
+                  index === options.length - 1 ? styles.rowLast : styles.row
+                }
+                textStyle={
+                  option.destructive ? styles.destructive : styles.rowText
+                }
+              />
+            ))}
+          </View>
           <AdaptiveButton
-            key={option.label}
             variant="light"
-            title={option.label}
-            onPress={() => handlePress(option)}
-            style={styles.option}
-            textStyle={option.destructive ? styles.destructive : undefined}
+            title={cancelLabel}
+            onPress={onClose}
+            style={styles.cancel}
+            textStyle={styles.cancelText}
           />
-        ))}
-        <AdaptiveButton
-          variant="light"
-          title={cancelLabel}
-          onPress={onClose}
-          style={styles.cancel}
-          textStyle={styles.cancelText}
-        />
-      </View>
+        </View>
+      </Pressable>
     </Modal>
   );
 };
@@ -71,34 +120,55 @@ const ActionSheet: React.FC<ActionSheetProps> = ({
 export default ActionSheet;
 
 const styles = StyleSheet.create({
-  backdrop: {
+  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   container: {
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    width: '100%',
+  },
+  group: {
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
   title: {
     ...Style.getTextStyle(13, 'Regular', Colors.textColor),
     textAlign: 'center',
     paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
   },
-  option: {
-    borderRadius: 100,
-    marginBottom: 10,
+  row: {
+    backgroundColor: 'transparent',
+    borderRadius: 0,
     height: 'auto',
-    paddingVertical: 14,
+    paddingVertical: 17,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border,
+  },
+  rowLast: {
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    height: 'auto',
+    paddingVertical: 17,
+  },
+  rowText: {
+    ...Style.getTextStyle(17, 'Regular', Colors.accent),
   },
   destructive: {
-    color: Colors.red,
+    ...Style.getTextStyle(17, 'Regular', Colors.red),
   },
   cancel: {
-    borderRadius: 100,
+    backgroundColor: Colors.white,
+    borderRadius: 14,
     height: 'auto',
-    paddingVertical: 14,
+    paddingVertical: 17,
+    marginTop: 8,
   },
   cancelText: {
-    ...Style.getTextStyle(Style.kButtonFontSize, 'SemiBold', Colors.black),
+    ...Style.getTextStyle(17, 'SemiBold', Colors.accent),
   },
 });

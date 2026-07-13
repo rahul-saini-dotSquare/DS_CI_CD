@@ -5,6 +5,7 @@ import {
   FormTextInput,
   FormSubmitButton,
   FormImagePicker,
+  FormDatePicker,
 } from '@components/form';
 import AuthContainer from '@components/layout/AuthContainer';
 import Spacer from '@components/layout/Spacer';
@@ -17,6 +18,7 @@ const emptyProfile: ProfileFormValues = {
   email: '',
   phone: '',
   photo: '',
+  dob: '',
 };
 
 const EditProfileScreen: React.FC<AppStackScreenProps<'EditProfileScreen'>> = ({
@@ -59,6 +61,14 @@ const EditProfileScreen: React.FC<AppStackScreenProps<'EditProfileScreen'>> = ({
             placeholder="Enter your phone number"
             keyboardType="phone-pad"
           />
+          <Spacer height={16} />
+          <FormDatePicker
+            name="dob"
+            label="Date of Birth"
+            placeholder="Select your date of birth"
+            mode="time"
+            maximumDate={new Date()}
+          />
           <Spacer height={24} />
           <FormSubmitButton
             variant="dark"
@@ -73,7 +83,5 @@ const EditProfileScreen: React.FC<AppStackScreenProps<'EditProfileScreen'>> = ({
 export default EditProfileScreen;
 
 const styles = StyleSheet.create({
-  content: {
-    paddingTop: 24,
-  },
+  content: {},
 });

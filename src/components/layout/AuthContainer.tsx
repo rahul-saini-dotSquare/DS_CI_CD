@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, View } from 'react-native';
+import { StyleSheet, ViewStyle, View, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Colors from '@theme/Colors';
 import Style from '@constants/Style';
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
-    paddingTop: 20,
+    paddingTop: Platform.OS == 'ios' ? 10 : 0,
   },
   content: {
     flexGrow: 1,

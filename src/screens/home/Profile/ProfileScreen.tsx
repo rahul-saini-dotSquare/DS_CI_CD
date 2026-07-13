@@ -13,6 +13,7 @@ const currentProfile = {
   email: 'john@example.com',
   phone: '1234567890',
   photo: '',
+  dob: '',
 };
 
 const ProfileScreen: React.FC<BottomTabScreenProps<'ProfileScreen'>> = ({

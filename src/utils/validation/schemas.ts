@@ -39,4 +39,6 @@ export const profileSchema = Yup.object({
   email: emailValidator,
   phone: phoneValidator,
   photo: Yup.string().required('Photo is required'),
+  dob: Yup.string().required('Dob is required'),
+  time: Yup.string().required('Time is required'),
 });

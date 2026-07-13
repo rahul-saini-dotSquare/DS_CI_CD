@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Formik } from 'formik';
 import { FormTextInput, FormSubmitButton } from '@components/form';
 import AdaptiveButton from '@components/ui/AdaptiveButton';
 import AdaptiveCheckbox from '@components/ui/AdaptiveCheckbox';
 import AuthContainer from '@components/layout/AuthContainer';
+import AuthLabeledContent from '@components/common/AuthLabeledContent';
 import Spacer from '@components/layout/Spacer';
-import Colors from '@theme/Colors';
-import Style from '@constants/Style';
 import { loginSchema } from '@utils/validation/schemas';
 import AuthService from '@api/service/AuthService';
 import keychain from '@lib/keychain';
@@ -51,8 +50,7 @@ const LoginScreen: React.FC<AuthStackScreenProps<'LoginScreen'>> = ({
 
   return (
     <AuthContainer centered={false}>
-      <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to continue</Text>
+      <AuthLabeledContent title="Welcome Back" subtitle="Sign in to continue" />
       <Spacer height={32} />
       <Formik
         enableReinitialize
@@ -106,13 +104,6 @@ const LoginScreen: React.FC<AuthStackScreenProps<'LoginScreen'>> = ({
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  title: {
-    ...Style.getTextStyle(26, 'Bold', Colors.black),
-  },
-  subtitle: {
-    ...Style.getTextStyle(15, 'Regular', Colors.textColor),
-    marginTop: 4,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

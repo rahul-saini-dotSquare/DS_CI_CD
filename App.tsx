@@ -6,9 +6,11 @@ import { hideSplash } from 'react-native-splash-view';
 import AppProviders from '@providers/AppProviders';
 import RootNavigator from '@navigation/RootNavigator';
 import ErrorBoundary from '@components/common/ErrorBoundary';
+import OfflineBanner from '@components/common/OfflineBanner';
 import SocialLogin from '@lib/SocialLogin';
 import NotificationService from '@lib/NotificationService';
 import AuthService from '@api/service/AuthService';
+import { initNetwork } from '@lib/network';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -21,8 +23,12 @@ function App() {
       hideSplash();
     };
     bootstrap();
-    const unsubscribe = NotificationService.onForegroundMessage();
-    return unsubscribe;
+    const unsubscribeMessage = NotificationService.onForegroundMessage();
+    const unsubscribeNetwork = initNetwork();
+    return () => {
+      unsubscribeMessage();
+      unsubscribeNetwork();
+    };
   }, []);
 
   return (
@@ -31,6 +37,7 @@ function App() {
         <AppProviders>
           <StatusBar barStyle={isDarkMode ? 'dark-content' : 'dark-content'} />
           <RootNavigator />
+          <OfflineBanner />
           <Toast />
         </AppProviders>
       </ErrorBoundary>

@@ -32,6 +32,16 @@ jest.mock('react-native-splash-view', () => ({
   showSplash: jest.fn(),
 }));
 
+jest.mock('@react-native-community/netinfo', () => ({
+  __esModule: true,
+  default: {
+    addEventListener: jest.fn(() => jest.fn()),
+    fetch: jest.fn(() =>
+      Promise.resolve({ isConnected: true, isInternetReachable: true }),
+    ),
+  },
+}));
+
 jest.mock('react-native-config', () => ({
   __esModule: true,
   default: {

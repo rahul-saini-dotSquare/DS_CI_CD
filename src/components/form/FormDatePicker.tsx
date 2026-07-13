@@ -29,11 +29,13 @@ interface FormDatePickerProps {
   format?: (value: Date) => string;
 }
 
+const pad = (input: number) => String(input).padStart(2, '0');
+
 const formatValue = (value: Date, mode: PickerMode) => {
   if (mode === 'time') {
-    return value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${pad(value.getHours())}:${pad(value.getMinutes())}`;
   }
-  return value.toLocaleDateString();
+  return `${pad(value.getDate())}/${pad(value.getMonth() + 1)}/${value.getFullYear()}`;
 };
 
 const FormDatePicker: React.FC<FormDatePickerProps> = ({
@@ -123,6 +125,7 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({
             <DateTimePicker
               value={iosTemp}
               mode={mode}
+              style={styles.picker}
               display="spinner"
               minimumDate={minimumDate}
               maximumDate={maximumDate}
@@ -189,5 +192,8 @@ const styles = StyleSheet.create({
   },
   done: {
     ...Style.getTextStyle(15, 'SemiBold', Colors.primary),
+  },
+  picker: {
+    alignSelf: 'center',
   },
 });

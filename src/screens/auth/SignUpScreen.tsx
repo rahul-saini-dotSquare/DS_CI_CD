@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
 import AdaptiveTextInput from '@components/ui/AdaptiveTextInput';
 import AdaptiveButton from '@components/ui/AdaptiveButton';
 import AuthContainer from '@components/layout/AuthContainer';
+import AuthLabeledContent from '@components/common/AuthLabeledContent';
 import Spacer from '@components/layout/Spacer';
-import Colors from '@theme/Colors';
-import Style from '@constants/Style';
 import AuthService from '@api/service/AuthService';
 import { AuthStackScreenProps } from '@navigation/types';
 
@@ -22,8 +20,10 @@ const SignUpScreen: React.FC<AuthStackScreenProps<'SignUpScreen'>> = ({
 
   return (
     <AuthContainer centered={false}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Sign up to get started</Text>
+      <AuthLabeledContent
+        title="Create Account"
+        subtitle="Sign up to get started"
+      />
       <Spacer height={32} />
       <AdaptiveTextInput
         label="Full Name"
@@ -61,13 +61,3 @@ const SignUpScreen: React.FC<AuthStackScreenProps<'SignUpScreen'>> = ({
 };
 
 export default SignUpScreen;
-
-const styles = StyleSheet.create({
-  title: {
-    ...Style.getTextStyle(26, 'Bold', Colors.black),
-  },
-  subtitle: {
-    ...Style.getTextStyle(15, 'Regular', Colors.textColor),
-    marginTop: 4,
-  },
-});

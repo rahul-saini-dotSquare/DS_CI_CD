@@ -3,4 +3,5 @@ export interface ProfileFormValues {
   email: string;
   phone: string;
   photo: string;
+  dob: string;
 }
