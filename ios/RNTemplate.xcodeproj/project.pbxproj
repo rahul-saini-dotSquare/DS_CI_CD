@@ -328,7 +328,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ds.crm;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ds_ci_cd;
 				PRODUCT_NAME = RNTemplate;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -361,7 +361,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.ds.crm;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ds_ci_cd;
 				PRODUCT_NAME = RNTemplate;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;

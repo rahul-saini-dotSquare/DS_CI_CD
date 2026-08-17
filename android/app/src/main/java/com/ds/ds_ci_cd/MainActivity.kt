@@ -1,4 +1,4 @@
-package com.ds.crm
+package com.ds_ci_cd
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity

@@ -15,16 +15,21 @@ jest.mock('react-native-safe-area-context', () =>
 
 jest.mock('react-native-gesture-handler', () => {
   const React = require('react');
-  const {View} = require('react-native');
-  const Passthrough = ({children}) => React.createElement(View, null, children);
-  return {GestureHandlerRootView: Passthrough};
+  const { View } = require('react-native');
+  const Passthrough = ({ children }) =>
+    React.createElement(View, null, children);
+  return { GestureHandlerRootView: Passthrough };
 });
 
 jest.mock('react-native-keyboard-controller', () => {
   const React = require('react');
-  const {View} = require('react-native');
-  const Passthrough = ({children}) => React.createElement(View, null, children);
-  return {KeyboardProvider: Passthrough, KeyboardAwareScrollView: Passthrough};
+  const { View } = require('react-native');
+  const Passthrough = ({ children }) =>
+    React.createElement(View, null, children);
+  return {
+    KeyboardProvider: Passthrough,
+    KeyboardAwareScrollView: Passthrough,
+  };
 });
 
 jest.mock('react-native-splash-view', () => ({
@@ -46,7 +51,7 @@ jest.mock('react-native-config', () => ({
   __esModule: true,
   default: {
     ENV: 'test',
-    APP_NAME: 'RNTemplate',
+    APP_NAME: 'ds_ci_cd',
     API_URL: 'http://localhost:3000',
     API_TIMEOUT: '30000',
     GOOGLE_WEB_CLIENT_ID: 'test-web-client-id',
@@ -59,7 +64,7 @@ jest.mock('react-native-toast-message', () => {
   const Toast = () => null;
   Toast.show = jest.fn();
   Toast.hide = jest.fn();
-  return {__esModule: true, default: Toast};
+  return { __esModule: true, default: Toast };
 });
 
 jest.mock('react-native-device-info', () => ({
@@ -76,7 +81,7 @@ jest.mock('react-native-permissions', () => ({
   check: jest.fn(() => Promise.resolve('granted')),
   request: jest.fn(() => Promise.resolve('granted')),
   openSettings: jest.fn(() => Promise.resolve()),
-  PERMISSIONS: {IOS: {}, ANDROID: {}},
+  PERMISSIONS: { IOS: {}, ANDROID: {} },
   RESULTS: {
     GRANTED: 'granted',
     DENIED: 'denied',
@@ -92,10 +97,10 @@ jest.mock('@react-native-firebase/app', () => ({
 
 jest.mock('@react-native-firebase/auth', () => ({
   getAuth: jest.fn(() => ({})),
-  signInWithCredential: jest.fn(() => Promise.resolve({user: null})),
+  signInWithCredential: jest.fn(() => Promise.resolve({ user: null })),
   signOut: jest.fn(() => Promise.resolve()),
-  GoogleAuthProvider: {credential: jest.fn()},
-  AppleAuthProvider: {credential: jest.fn()},
+  GoogleAuthProvider: { credential: jest.fn() },
+  AppleAuthProvider: { credential: jest.fn() },
 }));
 
 jest.mock('@react-native-firebase/messaging', () => ({
@@ -105,7 +110,7 @@ jest.mock('@react-native-firebase/messaging', () => ({
   onMessage: jest.fn(() => jest.fn()),
   onTokenRefresh: jest.fn(() => jest.fn()),
   setBackgroundMessageHandler: jest.fn(),
-  AuthorizationStatus: {AUTHORIZED: 1, PROVISIONAL: 2},
+  AuthorizationStatus: { AUTHORIZED: 1, PROVISIONAL: 2 },
 }));
 
 jest.mock('@notifee/react-native', () => ({
@@ -113,17 +118,19 @@ jest.mock('@notifee/react-native', () => ({
   default: {
     createChannel: jest.fn(() => Promise.resolve('default')),
     displayNotification: jest.fn(() => Promise.resolve()),
-    requestPermission: jest.fn(() => Promise.resolve({authorizationStatus: 1})),
+    requestPermission: jest.fn(() =>
+      Promise.resolve({ authorizationStatus: 1 }),
+    ),
     onForegroundEvent: jest.fn(() => jest.fn()),
   },
-  AndroidImportance: {HIGH: 4, DEFAULT: 3},
+  AndroidImportance: { HIGH: 4, DEFAULT: 3 },
 }));
 
 jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSignin: {
     configure: jest.fn(),
     hasPlayServices: jest.fn(() => Promise.resolve(true)),
-    signIn: jest.fn(() => Promise.resolve({idToken: 'test-id-token'})),
+    signIn: jest.fn(() => Promise.resolve({ idToken: 'test-id-token' })),
     signOut: jest.fn(() => Promise.resolve()),
   },
   statusCodes: {
@@ -136,7 +143,7 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
 jest.mock('@invertase/react-native-apple-authentication', () => ({
   appleAuth: {
     performRequest: jest.fn(() => Promise.resolve({})),
-    Operation: {LOGIN: 1},
-    Scope: {EMAIL: 0, FULL_NAME: 1},
+    Operation: { LOGIN: 1 },
+    Scope: { EMAIL: 0, FULL_NAME: 1 },
   },
 }));

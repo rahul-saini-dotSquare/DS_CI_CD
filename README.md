@@ -46,7 +46,7 @@ cd ios && bundle install && bundle exec pod install && cd ..
 
 `android/app/google-services.json` and `ios/GoogleService-Info.plist` are **gitignored** — they hold per-project secrets. Copy the committed `*.example` files and replace them with the config from **your own** Firebase project. Never commit real credentials.
 
-> **Also rename the app identity to match your Firebase project.** This template ships with `applicationId` / bundle id `com.ds.crm`. Update `applicationId` in `android/app/build.gradle` and `PRODUCT_BUNDLE_IDENTIFIER` in Xcode (iOS target) so they match the package name / bundle id you registered in your Firebase project — otherwise Firebase Auth and Google Sign-In will silently mismatch.
+> **Also rename the app identity to match your Firebase project.** This template ships with `applicationId` / bundle id `com.ds_ci_cd`. Update `applicationId` in `android/app/build.gradle` and `PRODUCT_BUNDLE_IDENTIFIER` in Xcode (iOS target) so they match the package name / bundle id you registered in your Firebase project — otherwise Firebase Auth and Google Sign-In will silently mismatch.
 
 ## Running
 
