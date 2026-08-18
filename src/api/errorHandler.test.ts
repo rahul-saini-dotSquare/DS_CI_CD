@@ -1,5 +1,9 @@
 import axios from 'axios';
-import {normalizeApiError, getErrorMessage, ApiError} from '@api/errorHandler';
+import {
+  normalizeApiError,
+  getErrorMessage,
+  ApiError,
+} from '@api/errorHandler';
 
 describe('normalizeApiError', () => {
   it('extracts status and server message from an axios error', () => {
@@ -10,7 +14,7 @@ describe('normalizeApiError', () => {
       undefined,
       {
         status: 401,
-        data: {success: false, message: 'Unauthorized'},
+        data: { success: false, message: 'Unauthorized' },
       } as never,
     );
     const result = normalizeApiError(axiosError);

@@ -38,8 +38,8 @@ jobs:
         run: |
           cd ios
           xcodebuild \
-            -workspace YourApp.xcworkspace \
-            -scheme YourApp \
+            -workspace RNTemplate.xcworkspace \
+            -scheme RNTemplate \
             -configuration Release \
             -sdk iphonesimulator \
             build

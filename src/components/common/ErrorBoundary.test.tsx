@@ -1,6 +1,6 @@
 import React from 'react';
-import ReactTestRenderer, {act} from 'react-test-renderer';
-import {Text} from 'react-native';
+import ReactTestRenderer, { act } from 'react-test-renderer';
+import { Text } from 'react-native';
 import ErrorBoundary from '@components/common/ErrorBoundary';
 
 const Boom = () => {

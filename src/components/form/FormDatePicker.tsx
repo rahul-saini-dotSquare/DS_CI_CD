@@ -35,7 +35,9 @@ const formatValue = (value: Date, mode: PickerMode) => {
   if (mode === 'time') {
     return `${pad(value.getHours())}:${pad(value.getMinutes())}`;
   }
-  return `${pad(value.getDate())}/${pad(value.getMonth() + 1)}/${value.getFullYear()}`;
+  return `${pad(value.getDate())}/${pad(
+    value.getMonth() + 1,
+  )}/${value.getFullYear()}`;
 };
 
 const FormDatePicker: React.FC<FormDatePickerProps> = ({
