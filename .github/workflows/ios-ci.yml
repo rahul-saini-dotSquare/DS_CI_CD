@@ -1,0 +1,45 @@
+name: iOS CI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  ios-build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.2
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: TypeScript check
+        run: yarn tsc --noEmit
+
+      - name: Run ESLint
+        run: yarn lint
+
+      - name: Build iOS
+        run: |
+          cd ios
+          xcodebuild \
+            -workspace YourApp.xcworkspace \
+            -scheme YourApp \
+            -configuration Release \
+            -sdk iphonesimulator \
+            build
