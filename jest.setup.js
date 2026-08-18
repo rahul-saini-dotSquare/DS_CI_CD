@@ -9,17 +9,16 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   },
 }));
 
-jest.mock('react-native-safe-area-context', () =>
-  require('react-native-safe-area-context/jest/mock'),
-);
-
-jest.mock('react-native-gesture-handler', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  const Passthrough = ({ children }) =>
-    React.createElement(View, null, children);
-  return { GestureHandlerRootView: Passthrough };
+jest.mock('react-native-safe-area-context', () => {
+  // v5.9's jest/mock puts everything on `default`; spread it so named
+  // imports (SafeAreaProvider, useSafeAreaInsets, ...) resolve.
+  const mock = require('react-native-safe-area-context/jest/mock');
+  return { __esModule: true, ...(mock.default ?? mock) };
 });
+
+// Official mocks: the hand-rolled stub only exported GestureHandlerRootView,
+// so everything else @react-navigation/stack imports resolved to undefined.
+require('react-native-gesture-handler/jestSetup');
 
 jest.mock('react-native-keyboard-controller', () => {
   const React = require('react');

@@ -12,7 +12,7 @@ jest.mock('redux-persist', () => {
     ...actual,
     persistStore: jest.fn(() => ({
       subscribe: jest.fn(() => jest.fn()),
-      getState: jest.fn(() => ({bootstrapped: true})),
+      getState: jest.fn(() => ({ bootstrapped: true })),
       flush: jest.fn(() => Promise.resolve()),
       pause: jest.fn(),
       persist: jest.fn(),
@@ -31,12 +31,12 @@ jest.mock('@lib/NotificationService', () => ({
 
 jest.mock('@lib/SocialLogin', () => ({
   __esModule: true,
-  default: {configure: jest.fn()},
+  default: { configure: jest.fn() },
 }));
 
 jest.mock('@api/service/AuthService', () => ({
   __esModule: true,
-  default: {restoreSession: jest.fn(() => Promise.resolve(false))},
+  default: { restoreSession: jest.fn(() => Promise.resolve(false)) },
 }));
 
 test('renders correctly', async () => {
