@@ -20,6 +20,7 @@ function App() {
     NotificationService.init();
     const bootstrap = async () => {
       await AuthService.restoreSession();
+      console.log('App bootstrap completed');
       hideSplash();
     };
     bootstrap();
