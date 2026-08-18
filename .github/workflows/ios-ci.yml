@@ -3,12 +3,23 @@ name: iOS CI
 on:
   pull_request:
     branches:
-      - develop
+      - feature/integrate-ci-cd
       - main
+  workflow_dispatch:
+
+# A newer push to the same PR makes the in-flight build obsolete.
+concurrency:
+  group: ios-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   ios-build:
     runs-on: macos-latest
+    timeout-minutes: 60
+
+    env:
+      # Keeps the 18k-line xcodebuild output down to warnings and errors.
+      NSUnbufferedIO: YES
 
     steps:
       - name: Checkout repository
@@ -17,29 +28,68 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.22.2
+          node-version-file: .nvmrc
           cache: yarn
 
       - name: Install JavaScript dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
-
       - name: TypeScript check
-        run: yarn tsc --noEmit
+        run: yarn typecheck
 
       - name: Run ESLint
         run: yarn lint
 
+      - name: Run unit tests
+        run: yarn test --ci
+
+      # Uses .ruby-version and installs the Gemfile's pinned CocoaPods,
+      # rather than whatever version ships on the runner image.
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Cache Pods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install CocoaPods
+        working-directory: ios
+        run: bundle exec pod install
+
+      # Bust this by bumping the `v1` segment if a stale build ever confuses CI.
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ios/build/DerivedData
+          key: ${{ runner.os }}-derived-v1-${{ hashFiles('ios/Podfile.lock', 'yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-derived-v1-
+
       - name: Build iOS
+        working-directory: ios
         run: |
-          cd ios
+          set -o pipefail
           xcodebuild \
             -workspace RNTemplate.xcworkspace \
             -scheme RNTemplate \
             -configuration Release \
-            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/DerivedData \
+            ARCHS=arm64 \
+            CODE_SIGNING_ALLOWED=NO \
             build
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ios/build/DerivedData/Logs
+          if-no-files-found: ignore
+          retention-days: 7
