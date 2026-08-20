@@ -25,6 +25,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # GoogleService-Info.plist is gitignored but is a build input in the
+      # Resources phase, so Xcode fails without it. Restored from a secret
+      # here (early) so a missing secret fails fast, not 14 minutes in.
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::error::Secret GOOGLE_SERVICE_INFO_PLIST is not set."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/GoogleService-Info.plist
+          plutil -lint ios/GoogleService-Info.plist
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -78,6 +92,7 @@ jobs:
         working-directory: ios
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild \
             -workspace RNTemplate.xcworkspace \
             -scheme RNTemplate \
@@ -86,13 +101,29 @@ jobs:
             -derivedDataPath build/DerivedData \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
-            build
+            build 2>&1 | tee build/xcodebuild.log
+
+      # xcodebuild only reports exit code 65 on failure; surface the real
+      # message inline so it is readable without downloading an artifact.
+      - name: Report build errors
+        if: failure()
+        working-directory: ios
+        run: |
+          echo "::group::error lines"
+          grep -nE 'error:|error Command|Undefined symbol|ld: |BUILD FAILED|The following build commands failed' \
+            build/xcodebuild.log | tail -n 60 || echo "(no error: lines matched)"
+          echo "::endgroup::"
+          echo "::group::last 150 lines"
+          tail -n 150 build/xcodebuild.log
+          echo "::endgroup::"
 
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-log
-          path: ios/build/DerivedData/Logs
-          if-no-files-found: ignore
+          path: |
+            ios/build/xcodebuild.log
+            ios/build/DerivedData/Logs
+          if-no-files-found: warn
           retention-days: 7
