@@ -25,6 +25,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # GoogleService-Info.plist is gitignored but is a build input in the
+      # Resources phase, so Xcode fails without it. Restored from a secret
+      # here (early) so a missing secret fails fast, not 14 minutes in.
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::error::Secret GOOGLE_SERVICE_INFO_PLIST is not set."
+            exit 1
+          fi
+          dest=ios/GoogleService-Info.plist
+          # Accept the secret as base64 (with any line wrapping) or as raw plist
+          # XML, so a paste of either form works.
+          if printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | tr -d '[:space:]' \
+               | base64 --decode > "$dest" 2>/dev/null && plutil -lint "$dest" >/dev/null 2>&1; then
+            echo "Secret decoded as base64."
+          else
+            printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > "$dest"
+            echo "Secret was not valid base64; treating it as raw plist text."
+          fi
+          if ! plutil -lint "$dest"; then
+            echo "::error::GOOGLE_SERVICE_INFO_PLIST is neither valid base64 nor a valid plist."
+            echo "Re-create it with: base64 -i ios/GoogleService-Info.plist | tr -d '\n' | pbcopy"
+            exit 1
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -43,11 +70,14 @@ jobs:
       - name: Run unit tests
         run: yarn test --ci
 
-      # Uses .ruby-version and installs the Gemfile's pinned CocoaPods,
-      # rather than whatever version ships on the runner image.
+      # Resolves CocoaPods from the Gemfile's constraints under .ruby-version,
+      # rather than whatever version ships on the runner image. There is no
+      # committed Gemfile.lock -- the old one was resolved under Ruby 2.6 with
+      # Bundler 1.17.2, which calls String#untaint (removed in Ruby 3.2).
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
+          bundler: latest
           bundler-cache: true
 
       - name: Cache Pods
@@ -75,6 +105,7 @@ jobs:
         working-directory: ios
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild \
             -workspace RNTemplate.xcworkspace \
             -scheme RNTemplate \
@@ -83,13 +114,33 @@ jobs:
             -derivedDataPath build/DerivedData \
             ARCHS=arm64 \
             CODE_SIGNING_ALLOWED=NO \
-            build
+            build 2>&1 | tee build/xcodebuild.log
+
+      # xcodebuild only reports exit code 65 on failure; surface the real
+      # message inline so it is readable without downloading an artifact.
+      - name: Report build errors
+        if: failure()
+        working-directory: ios
+        run: |
+          if [ ! -f build/xcodebuild.log ]; then
+            echo "No build/xcodebuild.log -- the build step never ran."
+            exit 0
+          fi
+          echo "::group::error lines"
+          grep -nE 'error:|error Command|Undefined symbol|ld: |BUILD FAILED|The following build commands failed' \
+            build/xcodebuild.log | tail -n 60 || echo "(no error: lines matched)"
+          echo "::endgroup::"
+          echo "::group::last 150 lines"
+          tail -n 150 build/xcodebuild.log
+          echo "::endgroup::"
 
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-log
-          path: ios/build/DerivedData/Logs
-          if-no-files-found: ignore
+          path: |
+            ios/build/xcodebuild.log
+            ios/build/DerivedData/Logs
+          if-no-files-found: warn
           retention-days: 7
