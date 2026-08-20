@@ -1,0 +1,171 @@
+name: iOS Release
+
+# Manual only, deliberately: an accidental trigger would push a build to
+# TestFlight. Add a tag trigger once signing is proven.
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the .ipa to TestFlight
+        type: boolean
+        default: true
+
+concurrency:
+  group: ios-release
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    runs-on: macos-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Restore Firebase config
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        run: |
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::error::Secret GOOGLE_SERVICE_INFO_PLIST is not set."
+            exit 1
+          fi
+          dest=ios/GoogleService-Info.plist
+          if printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | tr -d '[:space:]' \
+               | base64 --decode > "$dest" 2>/dev/null && plutil -lint "$dest" >/dev/null 2>&1; then
+            echo "Secret decoded as base64."
+          else
+            printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > "$dest"
+            echo "Secret was not valid base64; treating it as raw plist text."
+          fi
+          plutil -lint "$dest"
+
+      # xcodebuild and altool both read the key from this well-known location,
+      # named AuthKey_<KEY_ID>.p8.
+      - name: Prepare App Store Connect API key
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          for v in ASC_KEY_ID ASC_PRIVATE_KEY; do
+            eval "val=\$$v"
+            if [ -z "$val" ]; then
+              echo "::error::Secret APP_STORE_CONNECT_${v#ASC_} is not set."
+              exit 1
+            fi
+          done
+          dir="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$dir"
+          key_path="$dir/AuthKey_${ASC_KEY_ID}.p8"
+          # Accept the secret as raw PEM text or as base64.
+          if printf '%s' "$ASC_PRIVATE_KEY" | grep -q 'BEGIN PRIVATE KEY'; then
+            printf '%s\n' "$ASC_PRIVATE_KEY" > "$key_path"
+          else
+            printf '%s' "$ASC_PRIVATE_KEY" | tr -d '[:space:]' | base64 --decode > "$key_path"
+          fi
+          chmod 600 "$key_path"
+          if ! openssl pkey -in "$key_path" -noout 2>/dev/null; then
+            echo "::error::APP_STORE_CONNECT_PRIVATE_KEY is not a valid .p8 private key."
+            exit 1
+          fi
+          echo "ASC_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler: latest
+          bundler-cache: true
+
+      - name: Cache Pods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install CocoaPods
+        working-directory: ios
+        run: bundle exec pod install
+
+      # github.run_number is monotonic, which is all App Store Connect needs to
+      # accept the upload. Overridden here rather than committed to the project.
+      - name: Archive
+        working-directory: ios
+        env:
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild archive \
+            -workspace RNTemplate.xcworkspace \
+            -scheme RNTemplate \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/RNTemplate.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            DEVELOPMENT_TEAM=5NBYKWJL2V \
+            2>&1 | tee build/archive.log
+
+      - name: Export .ipa
+        working-directory: ios
+        env:
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath build/RNTemplate.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee build/export.log
+          ls -lh build/ipa
+
+      - name: Upload to TestFlight
+        if: inputs.upload
+        working-directory: ios
+        env:
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          ipa=$(find build/ipa -name '*.ipa' -maxdepth 1 | head -n 1)
+          if [ -z "$ipa" ]; then
+            echo "::error::No .ipa produced by export."
+            exit 1
+          fi
+          echo "Uploading $ipa (build ${{ github.run_number }})"
+          xcrun altool --upload-app -f "$ipa" -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-release-${{ github.run_number }}
+          path: |
+            ios/build/ipa/*.ipa
+            ios/build/archive.log
+            ios/build/export.log
+          if-no-files-found: warn
+          retention-days: 14
