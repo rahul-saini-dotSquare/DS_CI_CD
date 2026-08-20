@@ -36,8 +36,21 @@ jobs:
             echo "::error::Secret GOOGLE_SERVICE_INFO_PLIST is not set."
             exit 1
           fi
-          printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode > ios/GoogleService-Info.plist
-          plutil -lint ios/GoogleService-Info.plist
+          dest=ios/GoogleService-Info.plist
+          # Accept the secret as base64 (with any line wrapping) or as raw plist
+          # XML, so a paste of either form works.
+          if printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" | tr -d '[:space:]' \
+               | base64 --decode > "$dest" 2>/dev/null && plutil -lint "$dest" >/dev/null 2>&1; then
+            echo "Secret decoded as base64."
+          else
+            printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > "$dest"
+            echo "Secret was not valid base64; treating it as raw plist text."
+          fi
+          if ! plutil -lint "$dest"; then
+            echo "::error::GOOGLE_SERVICE_INFO_PLIST is neither valid base64 nor a valid plist."
+            echo "Re-create it with: base64 -i ios/GoogleService-Info.plist | tr -d '\n' | pbcopy"
+            exit 1
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -109,6 +122,10 @@ jobs:
         if: failure()
         working-directory: ios
         run: |
+          if [ ! -f build/xcodebuild.log ]; then
+            echo "No build/xcodebuild.log -- the build step never ran."
+            exit 0
+          fi
           echo "::group::error lines"
           grep -nE 'error:|error Command|Undefined symbol|ld: |BUILD FAILED|The following build commands failed' \
             build/xcodebuild.log | tail -n 60 || echo "(no error: lines matched)"
