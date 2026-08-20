@@ -43,11 +43,14 @@ jobs:
       - name: Run unit tests
         run: yarn test --ci
 
-      # Uses .ruby-version and installs the Gemfile's pinned CocoaPods,
-      # rather than whatever version ships on the runner image.
+      # Resolves CocoaPods from the Gemfile's constraints under .ruby-version,
+      # rather than whatever version ships on the runner image. There is no
+      # committed Gemfile.lock -- the old one was resolved under Ruby 2.6 with
+      # Bundler 1.17.2, which calls String#untaint (removed in Ruby 3.2).
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
+          bundler: latest
           bundler-cache: true
 
       - name: Cache Pods
